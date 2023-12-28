@@ -1,7 +1,12 @@
 import styled from "styled-components";
 import React, {useState} from "react";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {auth} from "../firebase";
+import {useNavigate} from "react-router-dom";
 
 export default function CreateAccount(){
+  const navigate = useNavigate()
+
   const [isLoading, setIsLoading] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -19,15 +24,27 @@ export default function CreateAccount(){
     }
   }
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     // 1. 계정 생성
     // 2. 유저 프로필 지정
     // 3. 홈으로 리다이렉트
     console.log(name, email, password)
 
-    try{
+    if (isLoading || name === '' || email === ''|| password === '') return
 
+    try{
+      setIsLoading(true)
+      // createUserWithEmailAndPassword 함수
+      // 이 함수가 성공하면 유저의 자격 증명(credentials)을 받게 됨
+      // 또한 사용자는 바로 로그인 된다
+      // 이미 존재하는 유저거나 비번이 유효하지 않으면 실패함
+      const credentials = await createUserWithEmailAndPassword(auth,email,password)
+      console.log(credentials.user) //유저의 정보를 얻을 수 있다
+      await updateProfile(credentials.user, {
+        displayName: name
+      })
+      navigate('/')
     } catch(e) {
 
     } finally {
@@ -36,7 +53,7 @@ export default function CreateAccount(){
   }
 
   return <Wrapper>
-    <Title>Log into 𝕏</Title>
+    <Title>Join 𝕏</Title>
     <Form onSubmit={onSubmit}>
       <Input onChange={onChange} name='name' value={name} placeholder='Name' type='text' required/>
       <Input onChange={onChange} name='email' value={email} placeholder='Email' type='email' required/>
