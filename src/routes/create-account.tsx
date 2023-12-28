@@ -1,8 +1,12 @@
-import styled from "styled-components";
+
 import React, {useState} from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import {auth} from "../firebase";
-import {useNavigate} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
+import { FirebaseError } from "firebase/app";
+import {Input, Switcher, Title, Wrapper, Error, Form} from "../components/auth-components";
+import GithubButton from "../components/github-button";
+
 
 export default function CreateAccount(){
   const navigate = useNavigate()
@@ -26,6 +30,7 @@ export default function CreateAccount(){
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setError('') // 새로고침하면 초기화
     // 1. 계정 생성
     // 2. 유저 프로필 지정
     // 3. 홈으로 리다이렉트
@@ -47,6 +52,10 @@ export default function CreateAccount(){
       navigate('/')
     } catch(e) {
 
+      if(e instanceof FirebaseError){
+        console.log(e.code, e.message)
+        setError(e.message)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -61,41 +70,9 @@ export default function CreateAccount(){
       <Input type='submit' value={isLoading ? 'Loading...' : 'Create Account'}/>
     </Form>
     {error !== '' ? <Error>{error}</Error> : null}
+    <Switcher>
+      이미 회원이신가요? <Link to='/login'>로그인 &rarr;</Link>
+    </Switcher>
+    <GithubButton />
   </Wrapper>
 }
-
-const Wrapper = styled.div`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 420px;
-  padding: 50px 0px;
-`
-const Title = styled.h1`
-  font-size: 42px
-`
-const Form = styled.form`
-  margin-top: 50px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-`
-const Input = styled.input`
-  padding: 10px 20px;
-  border-radius: 50px;
-  border: none;
-  width: 100%;
-  font-size: 16px;
-  &[type='submit']{
-    cursor: pointer;
-    &:hover {
-      opacity: 0.8;
-    }
-  }
-`
-const Error = styled.span`
-  font-weight: 600;
-  color: tomato;
-  `
