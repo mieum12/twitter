@@ -6,6 +6,9 @@ import Login from "./routes/login";
 import CreateAccount from "./routes/create-account";
 import {createGlobalStyle} from "styled-components";
 import reset from "styled-reset";
+import {useEffect, useState} from "react";
+import LoadingScreen from "./components/loading-screen";
+import {auth} from "./firebase";
 
 const router = createBrowserRouter([
   {
@@ -45,9 +48,21 @@ const GlobalStyles = createGlobalStyle`
 `
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true)
+  const init = async ()=>{
+    // fire base가 로그인 여부나 유저가 누구인지 확인할 떄까지 기다리는 부분
+    await auth.authStateReady()
+    // fire base가 로딩이 완료되면
+    setIsLoading(false)
+
+  }
+
+  useEffect(()=>{
+    init()
+  },[])
   return <>
     <GlobalStyles/>
-    <RouterProvider router={router}/>
+    {isLoading ? <LoadingScreen/> : <RouterProvider router={router}/>}
   </>
 }
 
