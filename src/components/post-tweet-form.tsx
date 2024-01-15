@@ -15,8 +15,10 @@ export default function PostTweetForm(){
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {files} = e.target
-    if(files && files.length ===1) {
+    if(files && files.length ===1 && files[0].size < 1000000) {
       setFile(files[0])
+    } else if (files && files.length === 1 && files[0].size >= 1000000) {
+      alert('1MB 미만으로 추가해주세요');
     }
   }
 
