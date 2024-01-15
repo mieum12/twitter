@@ -35,9 +35,8 @@ export default function Profile(){
   }
 
   const onEdit = async () => {
-    if (!user) {
-      return;
-    }
+    if (!user) return;
+
     if (edit) {
       await updateProfile(user, {
         displayName: name,
@@ -96,7 +95,7 @@ export default function Profile(){
         type='file'
         accept='image/*'
       />
-      {edit ? (
+      { edit ? (
         <input
           value={name || ''}
           onChange={(e) => setName(e.target.value)}
@@ -110,7 +109,7 @@ export default function Profile(){
           {user?.displayName ?? 'Anonymous' }
         </Name>
       )}
-      <EditBtn onClick={onEdit}>{edit ? '저장' : '닉네임 수정'}</EditBtn>
+      <EditBtn onClick={onEdit}>{ edit ? 'SAVE' : 'EDIT' }</EditBtn>
       <Tweets>
         {tweets.map(tweet => <
           Tweet key={tweet.id} {...tweet}/>

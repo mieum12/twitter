@@ -1,16 +1,20 @@
 import {ITweet} from "./timeLine";
 import styled from "styled-components";
 import {auth, db, storage} from "../firebase";
-import { deleteDoc, doc } from "firebase/firestore";
+import {deleteDoc, doc, updateDoc} from "firebase/firestore";
 import {deleteObject, ref } from "firebase/storage";
+import React, {useState} from "react";
 
 // Tweet은 이전에 생성한 ITweet 인터페이스를 받게 됨
 // 그 인터페이스 중 원하는 것만 추출해서 가져오기 (username, photo,tweet)
 export default function Tweet( {username, photo, tweet, userId, id} : ITweet ) {
   const user = auth.currentUser
+  const [edit, setEdit] = useState(false);
+  const [editTweet, setEditTweet] = useState(tweet);
+
+
   const onDelete = async () => {
     const ok = window.confirm('이 트윗을 정말로 삭제하시겠습니까?')
-
     if (!ok || user?.uid !== userId) return;
     try {
       // 삭제할 문서에 대한 참조를 넣어주면 삭제
@@ -29,12 +33,37 @@ export default function Tweet( {username, photo, tweet, userId, id} : ITweet ) {
       //
     }
   }
+
+  const onEdit = async () => {
+    if (user?.uid !== userId) return;
+
+    if (edit) {
+      await updateDoc(doc(db, 'tweets',id),{
+        tweet: editTweet
+      });
+      setEdit(false)
+    } else {
+      setEdit(true)
+    }
+  }
   return (
     <Wrapper>
       <Column>
         <Username>{username}</Username>
-        <Payload>{tweet}</Payload>
-        { user?.uid === userId ? <DeleteButton onClick={onDelete}>Delete</DeleteButton> : null }
+        {edit ? (
+          <Payload>
+            <input
+              value={editTweet || ''}
+              onChange={(e) => setEditTweet(e.target.value)}
+            />
+          </Payload>
+        ) : <Payload>{tweet}</Payload>}
+        { user?.uid === userId ? (
+          <>
+            <DeleteButton onClick={onDelete}>Delete</DeleteButton>
+            <EditBtn onClick={onEdit}>{edit ? 'SAVE' : 'EDIT'}</EditBtn>
+          </>
+        ) : null }
       </Column>
       <Column>
         {photo ? (<Photo src={photo}/>) : null }
@@ -80,3 +109,15 @@ const DeleteButton = styled.button`
   border-radius: 5px;
   cursor: pointer;
 `
+const EditBtn = styled.button`
+  background-color: darkgreen;
+  color: white;
+  font-weight: 600;
+  border: 0 ;
+  font-size: 12px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 10px;
+`;
