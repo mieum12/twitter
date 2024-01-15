@@ -11,6 +11,8 @@ export default function Profile(){
   const user = auth.currentUser
   const [avatar, setAvatar] = useState(user?.photoURL)
   const [tweets,setTweets] = useState<ITweet[]>([])
+  const [edit, setEdit] = useState(false);
+  const [name, setName] = useState(user?.displayName);
   const onAvatarChange = async (e:React.ChangeEvent<HTMLInputElement>) => {
     const {files} = e.target
     if (!user) return;
@@ -31,6 +33,20 @@ export default function Profile(){
       })
     }
   }
+
+  const onEdit = async () => {
+    if (!user) {
+      return;
+    }
+    if (edit) {
+      await updateProfile(user, {
+        displayName: name,
+      });
+      setEdit(false);
+    } else {
+      setEdit(true);
+    }
+  };
 
   const fetchTweets = async () => {
     // 여기서는 내가 작성한 트윗만 보여주는 쿼리를 만들 것
@@ -80,13 +96,21 @@ export default function Profile(){
         type='file'
         accept='image/*'
       />
-      <Name>
-        {/*
-        아래처럼 짧게 줄일 수 있다!
-        {user?.displayName ? user.displayName : 'Anonymous' }
-        */}
-        {user?.displayName ?? 'Anonymous' }
-      </Name>
+      {edit ? (
+        <input
+          value={name || ''}
+          onChange={(e) => setName(e.target.value)}
+        />
+      ) : (
+        <Name>
+          {/*
+          아래처럼 짧게 줄일 수 있다!
+          {user?.displayName ? user.displayName : 'Anonymous' }
+          */}
+          {user?.displayName ?? 'Anonymous' }
+        </Name>
+      )}
+      <EditBtn onClick={onEdit}>{edit ? '저장' : '닉네임 수정'}</EditBtn>
       <Tweets>
         {tweets.map(tweet => <
           Tweet key={tweet.id} {...tweet}/>
@@ -133,3 +157,14 @@ const Tweets = styled.div`
   flex-direction: column;
   gap: 10px;
 `
+const EditBtn = styled.button`
+  background-color: black;
+  color: white;
+  font-weight: 600;
+  border: 1px solid ;
+  font-size: 12px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  cursor: pointer;
+`;
