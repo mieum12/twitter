@@ -1,7 +1,8 @@
 import styled from "styled-components";
 import React, {useState} from "react";
-import { addDoc, collection } from "firebase/firestore";
-import {auth, db} from "../firebase";
+import { addDoc, collection, updateDoc } from "firebase/firestore";
+import {auth, db, storage} from "../firebase";
+import {getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 
 export default function PostTweetForm(){
   const [isLoding, setLoding] = useState(false)
@@ -29,12 +30,33 @@ export default function PostTweetForm(){
       setLoding(true)
       // 어떤 컬렉션, 어떤 경로에 새로운 document를 생성해줄지 정한다
       // 자바스크립트로 원하는 데이터를 만들면 알아서 넣어주게끔!
-      await addDoc(collection(db, 'tweets'), {
+      // addDoc는 생성된 document의 참조를 프로미스로 반환하기 때문에 변수로 저장해줄 수 있다
+      // 결국 doc은 하나의 트윗 인 것이다!
+      const doc = await addDoc(collection(db, 'tweets'), {
         tweet,
         createdAt: Date.now(),
         username: user.displayName || 'Anonymous',
         userId: user.uid
       })
+      // 파일 첨부 : 파일이 있다면 위치에 대한 참조(레퍼런스)를 받아야함
+      if (file) {
+        // 업로드 된 파일이 저장되는 폴더명, 파일명을 정할 수 있음
+        const locationRef = ref(storage, `tweets/${user.uid}-${user.displayName}/${doc.id}`)
+        // uploadBytes에 파일의 저장 위치를 알려주고 파일을 넣어준다
+        // 이 함수는 프로미스를 반환하는데 그 결과값에 업로드 결과에 대한 참조가 있음
+        const result = await uploadBytes(locationRef, file)
+        // 이미지의 url을 받아서 doc에 그 url정보를 저장하고싶음
+        // getDownloadURL은 result의 퍼블릭 url을 알려준다
+        // 이 함수는 스트링을 반환하는 프로미스 = 올린 사진파일의 url이다
+        const url = await getDownloadURL(result.ref)
+        // updateDoc는 업데이트 할 doc에 대한 참조와 업데이트 할 데이터를 필요
+        // 결론: 파일을 업로드하고 그 url을 받아서, 전에 만든 트윗 doc에 저장하기
+        await updateDoc(doc, {
+          photo: url
+        })
+        setTweet('')
+        setFile(null)
+      }
     } catch (e) {
       console.log(e)
     } finally {
@@ -43,7 +65,13 @@ export default function PostTweetForm(){
   }
 
   return <Form onSubmit={onSubmit}>
-    <TextArea rows={5} maxLength={180} onChange={onChange} value={tweet} placeholder='무슨 일이 일어나고 있나요?'/>
+    <TextArea
+      required
+      rows={5}
+      maxLength={180}
+      onChange={onChange}
+      value={tweet}
+      placeholder='무슨 일이 일어나고 있나요?'/>
     <AttachFileButton htmlFor='file'>{file ? '첨부완료 ✅' : '사진첨부'}</AttachFileButton>
     <AttachFileInput onChange={onFileChange} type='file' id='file' accept='image/*'/>
     <SubmitBtn type='submit' value={isLoding ? '게시 중...':'게시하기'}/>
