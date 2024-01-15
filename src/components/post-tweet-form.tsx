@@ -1,5 +1,7 @@
 import styled from "styled-components";
 import React, {useState} from "react";
+import { addDoc, collection } from "firebase/firestore";
+import {auth, db} from "../firebase";
 
 export default function PostTweetForm(){
   const [isLoding, setLoding] = useState(false)
@@ -17,7 +19,30 @@ export default function PostTweetForm(){
     }
   }
 
-  return <Form>
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const user = auth.currentUser;
+
+    if( !user || isLoding || tweet === '' || tweet.length > 180 ) return;
+    
+    try {
+      setLoding(true)
+      // 어떤 컬렉션, 어떤 경로에 새로운 document를 생성해줄지 정한다
+      // 자바스크립트로 원하는 데이터를 만들면 알아서 넣어주게끔!
+      await addDoc(collection(db, 'tweets'), {
+        tweet,
+        createdAt: Date.now(),
+        username: user.displayName || 'Anonymous',
+        userId: user.uid
+      })
+    } catch (e) {
+      console.log(e)
+    } finally {
+      setLoding(false)
+    }
+  }
+
+  return <Form onSubmit={onSubmit}>
     <TextArea rows={5} maxLength={180} onChange={onChange} value={tweet} placeholder='무슨 일이 일어나고 있나요?'/>
     <AttachFileButton htmlFor='file'>{file ? '첨부완료 ✅' : '사진첨부'}</AttachFileButton>
     <AttachFileInput onChange={onFileChange} type='file' id='file' accept='image/*'/>

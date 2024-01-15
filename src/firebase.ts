@@ -1,6 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import {getAuth} from 'firebase/auth'
+import { getAuth } from 'firebase/auth'
+import { getStorage } from 'firebase/storage'
+import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: "AIzaSyA5ZXfyljeTiRqQbV-mNCtNonvx54VjrrE",
@@ -15,3 +17,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 // 그 app에 대한 인증 서비스를 사용하고싶다고 선언
 export const auth = getAuth(app)
+
+// 스토리지에 접근 가능
+export const storage = getStorage(app)
+
+// 데이터베이스에 접근 가능
+export const db = getFirestore(app)
